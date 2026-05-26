@@ -3,14 +3,14 @@ import { useState, useEffect, useCallback } from "react";
 // ─── STORAGE HELPERS ────────────────────────────────────────────────────────
 const KEYS = { players: "bg_players", games: "bg_games", matches: "bg_matches" };
 
-async function load(key) {
+function load(key) {
   try {
-    const r = await window.storage.get(key, true);
-    return r ? JSON.parse(r.value) : null;
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : null;
   } catch { return null; }
 }
-async function save(key, val) {
-  try { await window.storage.set(key, JSON.stringify(val), true); } catch {}
+function save(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
 // ─── ICONS ──────────────────────────────────────────────────────────────────
@@ -123,13 +123,10 @@ export default function App() {
   const [sortDir, setSortDir] = useState("desc");
 
   useEffect(() => {
-    (async () => {
-      const [p,g,m] = await Promise.all([load(KEYS.players),load(KEYS.games),load(KEYS.matches)]);
-      setPlayers(p || []);
-      setGames(g || []);
-      setMatches(m || []);
-      setLoading(false);
-    })();
+    setPlayers(load(KEYS.players) || []);
+    setGames(load(KEYS.games) || []);
+    setMatches(load(KEYS.matches) || []);
+    setLoading(false);
   }, []);
 
   const addPlayer = (name) => {
