@@ -216,15 +216,17 @@ export default function App() {
             {tab === "leaderboard" ? "Classement" : tab === "players" ? "Joueurs" : "Jeux"}
           </h1>
         </div>
-        <button
-          onClick={() => {
-            if (tab === "players") setModal("newPlayer");
-            else setView({type:"newMatch"});
-          }}
-          style={{background:"linear-gradient(135deg,#A770EF,#CF8BF3)",border:"none",borderRadius:16,padding:"10px 16px",cursor:"pointer",color:"#fff",display:"flex",alignItems:"center",gap:6,fontWeight:700,fontSize:13,fontFamily:"'Syne',sans-serif"}}>
-          <Icon name="plus" size={16}/>
-          {tab === "players" ? "Joueur" : "Partie"}
-        </button>
+        {tab !== "leaderboard" && (
+          <button
+            onClick={() => {
+              if (tab === "players") setModal("newPlayer");
+              else setView({type:"newMatch"});
+            }}
+            style={{background:"linear-gradient(135deg,#A770EF,#CF8BF3)",border:"none",borderRadius:16,padding:"10px 16px",cursor:"pointer",color:"#fff",display:"flex",alignItems:"center",gap:6,fontWeight:700,fontSize:13,fontFamily:"'Syne',sans-serif"}}>
+            <Icon name="plus" size={16}/>
+            {tab === "players" ? "Joueur" : "Partie"}
+          </button>
+        )}
       </div>
 
       {tab === "leaderboard" && (
@@ -252,8 +254,8 @@ export default function App() {
       {/* Bottom Nav */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"rgba(12,12,28,0.96)",borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",backdropFilter:"blur(12px)",zIndex:50}}>
         {[
-          {id:"leaderboard",label:"Classement",icon:"chart"},
           {id:"players",label:"Joueurs",icon:"users"},
+          {id:"leaderboard",label:"Classement",icon:"chart"},
           {id:"games",label:"Jeux",icon:"gamepad"},
         ].map(({id,label,icon}) => (
           <button key={id} onClick={() => setTab(id)} style={{
