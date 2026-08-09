@@ -212,7 +212,7 @@ export default function App() {
             <div style={{color:"#A770EF"}}><Icon name="dice" size={22}/></div>
             <span style={{fontSize:13,color:"#A770EF",fontWeight:600,letterSpacing:2,textTransform:"uppercase"}}>Board Scores</span>
           </div>
-          <h1 style={{margin:0,fontSize:26,fontWeight:800,color:"#fff",fontFamily:'Poppins',sans-serif}}>
+          <h1 style={{margin:0,fontSize:26,fontWeight:800,color:"#fff",fontFamily:"'Poppins',sans-serif"}}>
             {tab === "leaderboard" ? "Classement" : tab === "players" ? "Joueurs" : "Jeux"}
           </h1>
         </div>
@@ -561,7 +561,7 @@ function ProfileView({ player, matches, games, players, onBack }) {
         <div style={{display:"flex",alignItems:"center",gap:16}}>
           <Avatar name={player.name} size={72}/>
           <div>
-            <h2 style={{margin:"0 0 4px",fontSize:24,fontWeight:800,color:"#fff",fontFamily:'Poppins',sans-serif}}>{player.name}</h2>
+            <h2 style={{margin:"0 0 4px",fontSize:24,fontWeight:800,color:"#fff",fontFamily:"'Poppins',sans-serif"}}>{player.name}</h2>
             <div style={{fontSize:13,color:"#888"}}>{total} partie{total!==1?"s":""} jouée{total!==1?"s":""}</div>
           </div>
         </div>
@@ -691,7 +691,7 @@ function NewMatchView({ players: initialPlayers, games, initialGameId, onSave, o
         <button onClick={onBack} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:12,padding:"8px 12px",cursor:"pointer",color:"#fff",display:"flex",alignItems:"center",gap:6,marginBottom:24,fontSize:13,fontWeight:600}}>
           <Icon name="back" size={16}/> Annuler
         </button>
-        <h2 style={{margin:"0 0 4px",fontSize:24,fontWeight:800,color:"#fff",fontFamily:'Poppins',sans-serif}}>Nouvelle partie</h2>
+        <h2 style={{margin:"0 0 4px",fontSize:24,fontWeight:800,color:"#fff",fontFamily:"'Poppins',sans-serif"}}>Nouvelle partie</h2>
         <p style={{margin:"0 0 28px",color:"#888",fontSize:14}}>Sélectionne le jeu et les joueurs</p>
 
         {/* Step 1: Game */}
@@ -891,7 +891,7 @@ function RankingView({ selectedPlayers, gameId, games, players, onSave, onReplay
         <div style={{position:"relative",zIndex:1,padding:"52px 20px 40px"}}>
           <div style={{textAlign:"center",marginBottom:32}}>
             <div style={{fontSize:13,color:"#A770EF",fontWeight:600,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{game?.name}</div>
-            <h2 style={{margin:0,fontSize:28,fontWeight:800,color:"#fff",fontFamily:'Poppins',sans-serif}}>Résultats 🎉</h2>
+            <h2 style={{margin:0,fontSize:28,fontWeight:800,color:"#fff",fontFamily:"'Poppins',sans-serif"}}>Résultats 🎉</h2>
           </div>
 
           {/* Podium */}
@@ -1010,7 +1010,7 @@ function RankingView({ selectedPlayers, gameId, games, players, onSave, onReplay
         </button>
         <div style={{marginBottom:4}}>
           <div style={{fontSize:13,color:"#A770EF",fontWeight:600,letterSpacing:1,marginBottom:4}}>{game?.name}</div>
-          <h2 style={{margin:0,fontSize:24,fontWeight:800,color:"#fff",fontFamily:'Poppins',sans-serif}}>Classement de la partie</h2>
+          <h2 style={{margin:0,fontSize:24,fontWeight:800,color:"#fff",fontFamily:"'Poppins',sans-serif"}}>Classement de la partie</h2>
         </div>
         <p style={{margin:"8px 0 28px",color:"#888",fontSize:14}}>Assigne chaque joueur à sa place finale</p>
 
