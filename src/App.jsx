@@ -14,21 +14,35 @@ function save(key, val) {
 }
 
 
-// ─── TROPHIES ────────────────────────────────────────────────────────────────
+// ─── TROPHIES & RANKS ────────────────────────────────────────────────────────
+const GAME_ICONS_BASE = "https://game-icons.net/icons/ffffff/transparent/1x1";
 const TROPHIES = [
-  { id: "first_win",   wins: 1,   icon: "🏅", label: "Première victoire", color: "#CD7F32" },
-  { id: "five_wins",   wins: 5,   icon: "⚔️",  label: "Combattant",        color: "#A770EF" },
-  { id: "ten_wins",    wins: 10,  icon: "🔥",  label: "En feu",            color: "#FF6B35" },
-  { id: "twenty_wins", wins: 25,  icon: "💎",  label: "Diamant",           color: "#4ECDC4" },
-  { id: "fifty_wins",  wins: 50,  icon: "👑",  label: "Roi du plateau",    color: "#FFD700" },
-  { id: "hundred_wins",wins: 100, icon: "🐐",  label: "GOAT",              color: "#FF6B6B" },
+  { id: "zero",       wins: 0,   img: `${GAME_ICONS_BASE}/delapouite/rat.svg`,           label: "Rat des égouts", color: "#777" },
+  { id: "one",        wins: 1,   img: `${GAME_ICONS_BASE}/lorc/cowled.svg`,              label: "Gueux",          color: "#8B7355" },
+  { id: "five",       wins: 5,   img: `${GAME_ICONS_BASE}/delapouite/knight-helmet.svg`, label: "Chevalier",      color: "#C0C0C0" },
+  { id: "ten",        wins: 10,  img: `${GAME_ICONS_BASE}/lorc/shield.svg`,              label: "Garde royal",    color: "#4ECDC4" },
+  { id: "twentyfive", wins: 25,  img: `${GAME_ICONS_BASE}/lorc/wizard-staff.svg`,        label: "Sorcier",        color: "#A770EF" },
+  { id: "fifty",      wins: 50,  img: `${GAME_ICONS_BASE}/delapouite/winged-scepter.svg`,label: "Sceptre",        color: "#FF9500" },
+  { id: "seventy",    wins: 75,  img: `${GAME_ICONS_BASE}/lorc/hood.svg`,                label: "Cape royale",    color: "#CF8BF3" },
+  { id: "hundred",    wins: 100, img: `${GAME_ICONS_BASE}/delapouite/throne-king.svg`,   label: "Trône",          color: "#FFD700" },
 ];
+const CROWN_IMG = `${GAME_ICONS_BASE}/lorc/crown.svg`;
 
+function getCurrentRank(wins) {
+  return [...TROPHIES].reverse().find(t => wins >= t.wins) || TROPHIES[0];
+}
 function getUnlockedTrophies(wins) {
   return TROPHIES.filter(t => wins >= t.wins);
 }
 function getNextTrophy(wins) {
   return TROPHIES.find(t => wins < t.wins);
+}
+
+// Weighted score: wins × (winRate/100) × log10(parties+1)
+function weightedScore(wins, total) {
+  if (total === 0) return 0;
+  const winRate = wins / total;
+  return +(wins * winRate * Math.log10(total + 1)).toFixed(2);
 }
 // ─── ICONS ──────────────────────────────────────────────────────────────────
 const Icon = ({ name, size = 20 }) => {
@@ -102,9 +116,14 @@ function computeStats(playerId, matches, games) {
 }
 
 function computeLeaderboard(players, matches, games, sort, dir) {
-  return players.map(p => ({ p, ...computeStats(p.id, matches, games) })).sort((a, b) => {
+  return players.map(p => {
+    const stats = computeStats(p.id, matches, games);
+    const score = weightedScore(stats.wins, stats.total);
+    return { p, ...stats, score };
+  }).sort((a, b) => {
     let diff = 0;
-    if (sort === "wins") diff = b.wins - a.wins;
+    if (sort === "score") diff = b.score - a.score;
+    else if (sort === "wins") diff = b.wins - a.wins;
     else if (sort === "winPct") diff = b.winPct - a.winPct;
     else diff = b.total - a.total;
     return dir === "asc" ? -diff : diff;
@@ -143,7 +162,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState(null);
   const [modal, setModal] = useState(null);
-  const [sort, setSort] = useState("wins");
+  const [sort, setSort] = useState("score");
   const [sortDir, setSortDir] = useState("desc");
 
   useEffect(() => {
@@ -351,6 +370,7 @@ function LeaderboardTab({ players, matches, games, sort, sortDir, onSort, onProf
   return (
     <div style={{padding:"0 16px"}}>
       <div style={{display:"flex",gap:8,marginBottom:20,overflowX:"auto",paddingBottom:4}}>
+        <SortBtn id="score" label="Général"/>
         <SortBtn id="wins" label="Victoires"/>
         <SortBtn id="total" label="Parties"/>
         <SortBtn id="winPct" label="Win rate"/>
@@ -360,7 +380,7 @@ function LeaderboardTab({ players, matches, games, sort, sortDir, onSort, onProf
         <EmptyState icon="users" text="Aucun joueur enregistré" sub="Ajoute des joueurs pour voir le classement"/>
       ) : (
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {board.map(({p, total, wins, losses, winPct}, idx) => (
+          {board.map(({p, total, wins, losses, winPct, score}, idx) => (
             <button key={p.id} onClick={() => onProfile(p)} style={{
               background: idx===0 ? "linear-gradient(135deg,rgba(167,112,239,0.18),rgba(207,139,243,0.08))" : "rgba(255,255,255,0.04)",
               border: idx===0 ? "1px solid rgba(167,112,239,0.4)" : "1px solid rgba(255,255,255,0.07)",
@@ -373,14 +393,23 @@ function LeaderboardTab({ players, matches, games, sort, sortDir, onSort, onProf
               }}>
                 {idx === 0 ? <Icon name="crown" size={22}/> : `#${idx+1}`}
               </div>
-              <Avatar name={p.name} photo={p.photo} size={44}/>
+              <div style={{position:"relative",flexShrink:0}}>
+                <Avatar name={p.name} photo={p.photo} size={44}/>
+                {idx === 0 && sort === "score" && total >= 5 && (
+                  <img src={CROWN_IMG} style={{position:"absolute",top:-8,right:-8,width:22,height:22,filter:"drop-shadow(0 0 4px #FFD700)"}} alt=""/>
+                )}
+              </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{color:"#fff",fontWeight:700,fontSize:16,fontFamily:"'Syne',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
                 <div style={{fontSize:12,color:"#888",marginTop:2}}>{total} partie{total!==1?"s":""} · {wins}V / {losses}D</div>
               </div>
-              <div style={{textAlign:"right",flexShrink:0}}>
+              <div style={{textAlign:"right",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
                 <div style={{fontSize:20,fontWeight:800,color:winPctColor(winPct),fontFamily:"'Syne',sans-serif"}}>{winPct}%</div>
                 <div style={{fontSize:11,color:"#666"}}>win rate</div>
+                <div style={{display:"flex",alignItems:"center",gap:4,marginTop:2}}>
+                  <img src={getCurrentRank(wins).img} style={{width:14,height:14,filter:`drop-shadow(0 0 2px ${getCurrentRank(wins).color})`}} alt=""/>
+                  <span style={{fontSize:11,color:"#888"}}>{getCurrentRank(wins).label}</span>
+                </div>
               </div>
             </button>
           ))}
@@ -627,6 +656,10 @@ function ProfileView({ player, matches, games, players, onBack, onUpdate }) {
             <h2 style={{margin:"0 0 4px",fontSize:24,fontWeight:800,color:"#fff",fontFamily:"'Poppins',sans-serif"}}>{player.name}</h2>
             {player.bio && <div style={{fontSize:12,color:"#A770EF",marginBottom:3,fontStyle:"italic",lineHeight:1.3}}>{player.bio}</div>}
             <div style={{fontSize:13,color:"#888"}}>{total} partie{total!==1?"s":""} jouée{total!==1?"s":""}</div>
+            <div style={{display:"flex",alignItems:"center",gap:5,marginTop:2}}>
+              <img src={getCurrentRank(wins).img} style={{width:16,height:16,filter:`drop-shadow(0 0 3px ${getCurrentRank(wins).color})`}} alt=""/>
+              <span style={{fontSize:12,color:getCurrentRank(wins).color}}>{getCurrentRank(wins).label}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -706,7 +739,7 @@ function ProfileView({ player, matches, games, players, onBack, onUpdate }) {
                     opacity: unlocked ? 1 : 0.4,
                     filter: unlocked ? "none" : "grayscale(1)",
                   }}>
-                    <span style={{fontSize:24}}>{t.icon}</span>
+                    <img src={t.img} style={{width:28,height:28,filter:unlocked?`drop-shadow(0 0 4px ${t.color})`:"none"}} alt={t.label}/>
                     <span style={{fontSize:10,fontWeight:700,color: unlocked ? t.color : "#555",textAlign:"center",lineHeight:1.2}}>{t.label}</span>
                     <span style={{fontSize:9,color:"#555"}}>{t.wins} vic.</span>
                   </div>
