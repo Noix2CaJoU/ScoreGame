@@ -13,6 +13,23 @@ function save(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
+
+// ─── TROPHIES ────────────────────────────────────────────────────────────────
+const TROPHIES = [
+  { id: "first_win",   wins: 1,   icon: "🏅", label: "Première victoire", color: "#CD7F32" },
+  { id: "five_wins",   wins: 5,   icon: "⚔️",  label: "Combattant",        color: "#A770EF" },
+  { id: "ten_wins",    wins: 10,  icon: "🔥",  label: "En feu",            color: "#FF6B35" },
+  { id: "twenty_wins", wins: 25,  icon: "💎",  label: "Diamant",           color: "#4ECDC4" },
+  { id: "fifty_wins",  wins: 50,  icon: "👑",  label: "Roi du plateau",    color: "#FFD700" },
+  { id: "hundred_wins",wins: 100, icon: "🐐",  label: "GOAT",              color: "#FF6B6B" },
+];
+
+function getUnlockedTrophies(wins) {
+  return TROPHIES.filter(t => wins >= t.wins);
+}
+function getNextTrophy(wins) {
+  return TROPHIES.find(t => wins < t.wins);
+}
 // ─── ICONS ──────────────────────────────────────────────────────────────────
 const Icon = ({ name, size = 20 }) => {
   const icons = {
@@ -130,9 +147,13 @@ export default function App() {
   }, []);
 
   const addPlayer = (name) => {
-    const np = [...players, {id: Date.now().toString(), name, createdAt: Date.now()}];
+    const np = [...players, {id: Date.now().toString(), name, bio: "", photo: null, createdAt: Date.now()}];
     setPlayers(np); save(KEYS.players, np);
     return np[np.length-1];
+  };
+  const updatePlayer = (id, updates) => {
+    const np = players.map(p => p.id === id ? {...p, ...updates} : p);
+    setPlayers(np); save(KEYS.players, np);
   };
   const addGame = (name) => {
     const g = {id: Date.now().toString(), name, createdAt: Date.now()};
@@ -166,7 +187,12 @@ export default function App() {
   );
 
   if (view?.type === "profile") return (
-    <ProfileView player={view.data} matches={matches} games={games} players={players} onBack={() => setView(null)}/>
+    <ProfileView
+      player={players.find(p => p.id === view.data.id) || view.data}
+      matches={matches} games={games} players={players}
+      onBack={() => setView(null)}
+      onUpdate={(updates) => updatePlayer(view.data.id, updates)}
+    />
   );
 
   if (view?.type === "newMatch") return (
@@ -511,10 +537,27 @@ function GamesTab({ games, matches, players, onAddGame, onDelete, onNewMatch }) 
 }
 
 // ─── PROFILE VIEW ─────────────────────────────────────────────────────────────
-function ProfileView({ player, matches, games, players, onBack }) {
+function ProfileView({ player, matches, games, players, onBack, onUpdate }) {
   const { total, wins, losses, winPct, gameCount } = computeStats(player.id, matches, games);
   const [gameSort, setGameSort] = useState("total");
   const [gameSortDir, setGameSortDir] = useState("desc");
+  const [editingBio, setEditingBio] = useState(false);
+  const [bioText, setBioText] = useState(player.bio || "");
+  const unlockedTrophies = getUnlockedTrophies(wins);
+  const nextTrophy = getNextTrophy(wins);
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => onUpdate({ photo: ev.target.result });
+    reader.readAsDataURL(file);
+  };
+
+  const saveBio = () => {
+    onUpdate({ bio: bioText });
+    setEditingBio(false);
+  };
 
   const handleGameSort = (key) => {
     if (gameSort === key) setGameSortDir(d => d === "desc" ? "asc" : "desc");
@@ -559,7 +602,22 @@ function ProfileView({ player, matches, games, players, onBack }) {
           <Icon name="back" size={16}/> Retour
         </button>
         <div style={{display:"flex",alignItems:"center",gap:16}}>
-          <Avatar name={player.name} size={72}/>
+          <div style={{position:"relative",flexShrink:0}}>
+            {player.photo
+              ? <img src={player.photo} alt={player.name} style={{width:72,height:72,borderRadius:"50%",objectFit:"cover",border:"2px solid rgba(167,112,239,0.5)"}}/>
+              : <Avatar name={player.name} size={72}/>
+            }
+            <label style={{
+              position:"absolute",bottom:0,right:0,
+              width:24,height:24,borderRadius:"50%",
+              background:"#A770EF",border:"2px solid #060612",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              cursor:"pointer",
+            }}>
+              <input type="file" accept="image/*" capture="user" onChange={handlePhotoChange} style={{display:"none"}}/>
+              <Icon name="plus" size={12}/>
+            </label>
+          </div>
           <div>
             <h2 style={{margin:"0 0 4px",fontSize:24,fontWeight:800,color:"#fff",fontFamily:"'Poppins',sans-serif"}}>{player.name}</h2>
             <div style={{fontSize:13,color:"#888"}}>{total} partie{total!==1?"s":""} jouée{total!==1?"s":""}</div>
@@ -594,6 +652,72 @@ function ProfileView({ player, matches, games, players, onBack }) {
             </div>
           </div>
         )}
+
+        {/* Bio */}
+        <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"14px 16px",marginBottom:20}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:editingBio?10:0}}>
+            <div style={{fontSize:12,color:"#888",fontWeight:600,textTransform:"uppercase",letterSpacing:1}}>Bio</div>
+            {!editingBio && <button onClick={() => setEditingBio(true)} style={{background:"rgba(167,112,239,0.15)",border:"1px solid rgba(167,112,239,0.3)",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:"#A770EF",fontSize:11,fontWeight:600}}>Modifier</button>}
+          </div>
+          {editingBio ? (
+            <div>
+              <textarea
+                autoFocus
+                value={bioText}
+                onChange={e => setBioText(e.target.value)}
+                placeholder="Écris quelque chose..."
+                style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(167,112,239,0.4)",borderRadius:10,padding:"10px 12px",color:"#fff",fontSize:13,fontFamily:"'DM Sans',sans-serif",resize:"none",outline:"none",minHeight:80,marginTop:8}}
+              />
+              <div style={{display:"flex",gap:8,marginTop:8}}>
+                <button onClick={saveBio} style={{flex:1,padding:"10px",background:"#A770EF",border:"none",borderRadius:10,color:"#fff",fontWeight:700,cursor:"pointer",fontSize:13}}>Enregistrer</button>
+                <button onClick={() => { setBioText(player.bio||""); setEditingBio(false); }} style={{padding:"10px 14px",background:"rgba(255,255,255,0.08)",border:"none",borderRadius:10,color:"#888",cursor:"pointer",fontSize:13}}>Annuler</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{fontSize:13,color: player.bio ? "#ccc" : "#555",marginTop:player.bio?6:0,lineHeight:1.5}}>
+              {player.bio || "Aucune bio pour l'instant..."}
+            </div>
+          )}
+        </div>
+
+        {/* Trophées */}
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:12,color:"#888",fontWeight:600,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Trophées</div>
+          {unlockedTrophies.length === 0 ? (
+            <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"16px",textAlign:"center",color:"#555",fontSize:13}}>
+              {nextTrophy ? `Gagne ta première victoire pour débloquer "${nextTrophy.label}" !` : "Aucun trophée pour l'instant"}
+            </div>
+          ) : (
+            <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
+              {TROPHIES.map(t => {
+                const unlocked = wins >= t.wins;
+                return (
+                  <div key={t.id} style={{
+                    display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                    padding:"12px 10px",borderRadius:14,flex:"1 1 80px",minWidth:80,
+                    background: unlocked ? `rgba(${t.color.replace("#","").match(/.{2}/g).map(h=>parseInt(h,16)).join(",")},0.15)` : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${unlocked ? t.color+"55" : "rgba(255,255,255,0.06)"}`,
+                    opacity: unlocked ? 1 : 0.4,
+                    filter: unlocked ? "none" : "grayscale(1)",
+                  }}>
+                    <span style={{fontSize:24}}>{t.icon}</span>
+                    <span style={{fontSize:10,fontWeight:700,color: unlocked ? t.color : "#555",textAlign:"center",lineHeight:1.2}}>{t.label}</span>
+                    <span style={{fontSize:9,color:"#555"}}>{t.wins} vic.</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {nextTrophy && unlockedTrophies.length > 0 && (
+            <div style={{marginTop:10,padding:"10px 14px",background:"rgba(255,255,255,0.04)",borderRadius:12,border:"1px solid rgba(255,255,255,0.07)"}}>
+              <div style={{fontSize:11,color:"#888",marginBottom:4}}>Prochain trophée : <span style={{color:"#fff",fontWeight:600}}>{nextTrophy.icon} {nextTrophy.label}</span></div>
+              <div style={{height:6,background:"rgba(255,255,255,0.08)",borderRadius:10,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${Math.round((wins/nextTrophy.wins)*100)}%`,background:`linear-gradient(90deg,#A770EF,#CF8BF3)`,borderRadius:10,transition:"width 0.8s ease"}}/>
+              </div>
+              <div style={{fontSize:10,color:"#666",marginTop:4}}>{wins} / {nextTrophy.wins} victoires</div>
+            </div>
+          )}
+        </div>
 
         {gameStats.length > 0 && (
           <div style={{marginBottom:20}}>
