@@ -63,8 +63,15 @@ function getColor(name) {
   let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
-const Avatar = ({ name, size = 40 }) => {
+const Avatar = ({ name, photo, size = 40 }) => {
   const [c1, c2] = getColor(name);
+  if (photo) return (
+    <img src={photo} alt={name} style={{
+      width: size, height: size, borderRadius: "50%",
+      objectFit: "cover", flexShrink: 0,
+      border: "2px solid rgba(167,112,239,0.4)",
+    }}/>
+  );
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
@@ -366,7 +373,7 @@ function LeaderboardTab({ players, matches, games, sort, sortDir, onSort, onProf
               }}>
                 {idx === 0 ? <Icon name="crown" size={22}/> : `#${idx+1}`}
               </div>
-              <Avatar name={p.name} size={44}/>
+              <Avatar name={p.name} photo={p.photo} size={44}/>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{color:"#fff",fontWeight:700,fontSize:16,fontFamily:"'Syne',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
                 <div style={{fontSize:12,color:"#888",marginTop:2}}>{total} partie{total!==1?"s":""} · {wins}V / {losses}D</div>
@@ -414,9 +421,10 @@ function PlayersTab({ players, matches, games, onProfile, onDelete, onAdd }) {
             return (
               <div key={p.id} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
                 <button onClick={() => onProfile(p)} style={{display:"flex",alignItems:"center",gap:12,flex:1,background:"none",border:"none",cursor:"pointer",padding:0,textAlign:"left"}}>
-                  <Avatar name={p.name} size={46}/>
-                  <div>
+                  <Avatar name={p.name} photo={p.photo} size={46}/>
+                  <div style={{minWidth:0}}>
                     <div style={{color:"#fff",fontWeight:700,fontSize:15,fontFamily:"'Syne',sans-serif"}}>{p.name}</div>
+                    {p.bio && <div style={{fontSize:11,color:"#A770EF",fontStyle:"italic",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:180}}>{p.bio}</div>}
                     <div style={{fontSize:12,color:"#888",marginTop:2}}>{total} partie{total!==1?"s":""} · {wins} victoire{wins!==1?"s":""} · {winPct}%</div>
                   </div>
                 </button>
@@ -603,10 +611,7 @@ function ProfileView({ player, matches, games, players, onBack, onUpdate }) {
         </button>
         <div style={{display:"flex",alignItems:"center",gap:16}}>
           <div style={{position:"relative",flexShrink:0}}>
-            {player.photo
-              ? <img src={player.photo} alt={player.name} style={{width:72,height:72,borderRadius:"50%",objectFit:"cover",border:"2px solid rgba(167,112,239,0.5)"}}/>
-              : <Avatar name={player.name} size={72}/>
-            }
+            <Avatar name={player.name} photo={player.photo} size={72}/>
             <label style={{
               position:"absolute",bottom:0,right:0,
               width:24,height:24,borderRadius:"50%",
@@ -620,6 +625,7 @@ function ProfileView({ player, matches, games, players, onBack, onUpdate }) {
           </div>
           <div>
             <h2 style={{margin:"0 0 4px",fontSize:24,fontWeight:800,color:"#fff",fontFamily:"'Poppins',sans-serif"}}>{player.name}</h2>
+            {player.bio && <div style={{fontSize:12,color:"#A770EF",marginBottom:3,fontStyle:"italic",lineHeight:1.3}}>{player.bio}</div>}
             <div style={{fontSize:13,color:"#888"}}>{total} partie{total!==1?"s":""} jouée{total!==1?"s":""}</div>
           </div>
         </div>
@@ -866,7 +872,7 @@ function NewMatchView({ players: initialPlayers, games, initialGameId, onSave, o
                 background: selected.includes(p.id) ? "rgba(167,112,239,0.15)" : "rgba(255,255,255,0.04)",
                 borderColor: selected.includes(p.id) ? "#A770EF" : "rgba(255,255,255,0.08)",
               }}>
-                <Avatar name={p.name} size={38}/>
+                <Avatar name={p.name} photo={p.photo} size={38}/>
                 <span style={{color:"#fff",fontWeight:600,flex:1,fontSize:14}}>{p.name}</span>
                 {selected.includes(p.id) && <div style={{color:"#A770EF"}}><Icon name="check" size={18}/></div>}
               </button>
@@ -1024,7 +1030,7 @@ function RankingView({ selectedPlayers, gameId, games, players, onSave, onReplay
             {second && (
               <div style={{flex:1,textAlign:"center",animation:"popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both"}}>
                 <Avatar name={second.name} size={52} style={{margin:"0 auto 8px"}}/>
-                <div style={{display:"flex",justifyContent:"center",marginBottom:6}}><Avatar name={second.name} size={52}/></div>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:6}}><Avatar name={second.name} photo={second.photo} size={52}/></div>
                 <div style={{color:"#C0C0C0",fontWeight:800,fontSize:14,fontFamily:"'Syne',sans-serif",marginBottom:4}}>{second.name}</div>
                 <div style={{background:"linear-gradient(180deg,#9e9e9e,#616161)",borderRadius:"12px 12px 0 0",padding:"20px 0 0",marginTop:8}}>
                   <div style={{fontSize:28}}>🥈</div>
@@ -1035,7 +1041,7 @@ function RankingView({ selectedPlayers, gameId, games, players, onSave, onReplay
             {/* 1st */}
             {first && (
               <div style={{flex:1,textAlign:"center",animation:"popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0s both"}}>
-                <div style={{display:"flex",justifyContent:"center",marginBottom:6}}><Avatar name={first.name} size={64}/></div>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:6}}><Avatar name={first.name} photo={first.photo} size={64}/></div>
                 <div style={{color:"#FFD700",fontWeight:800,fontSize:15,fontFamily:"'Syne',sans-serif",marginBottom:4}}>{first.name}</div>
                 <div style={{background:"linear-gradient(180deg,#f7971e,#ffd200)",borderRadius:"12px 12px 0 0",padding:"24px 0 0",marginTop:8}}>
                   <div style={{fontSize:32}}>👑</div>
@@ -1046,7 +1052,7 @@ function RankingView({ selectedPlayers, gameId, games, players, onSave, onReplay
             {/* 3rd */}
             {third && (
               <div style={{flex:1,textAlign:"center",animation:"popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.2s both"}}>
-                <div style={{display:"flex",justifyContent:"center",marginBottom:6}}><Avatar name={third.name} size={44}/></div>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:6}}><Avatar name={third.name} photo={third.photo} size={44}/></div>
                 <div style={{color:"#CD7F32",fontWeight:800,fontSize:13,fontFamily:"'Syne',sans-serif",marginBottom:4}}>{third.name}</div>
                 <div style={{background:"linear-gradient(180deg,#cd7f32,#8B4513)",borderRadius:"12px 12px 0 0",padding:"14px 0 0",marginTop:8}}>
                   <div style={{fontSize:24}}>🥉</div>
@@ -1064,7 +1070,7 @@ function RankingView({ selectedPlayers, gameId, games, players, onSave, onReplay
                 {rest.map((p, i) => (
                   <div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14}}>
                     <div style={{width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",color:"#555",fontWeight:800,fontFamily:"'Syne',sans-serif",fontSize:14}}>#{i+4}</div>
-                    <Avatar name={p.name} size={36}/>
+                    <Avatar name={p.name} photo={p.photo} size={36}/>
                     <span style={{color:"#aaa",fontWeight:600,fontSize:14}}>{p.name}</span>
                   </div>
                 ))}
@@ -1155,7 +1161,7 @@ function RankingView({ selectedPlayers, gameId, games, players, onSave, onReplay
                     border: `1px solid ${placeNum===1?"rgba(255,210,0,0.4)":placeNum===2?"rgba(192,192,192,0.3)":placeNum===3?"rgba(205,127,50,0.3)":"rgba(255,255,255,0.08)"}`,
                     borderRadius:14,
                   }}>
-                    <Avatar name={assignedPlayer.name} size={40}/>
+                    <Avatar name={assignedPlayer.name} photo={assignedPlayer.photo} size={40}/>
                     <span style={{color:"#fff",fontWeight:700,flex:1,fontSize:15,fontFamily:"'Syne',sans-serif"}}>{assignedPlayer.name}</span>
                     <button onClick={() => clearSlot(rankIndex)} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:8,padding:6,cursor:"pointer",color:"#888",display:"flex"}}>
                       <Icon name="close" size={14}/>
@@ -1171,7 +1177,7 @@ function RankingView({ selectedPlayers, gameId, games, players, onSave, onReplay
                         borderRadius:20,border:"1px dashed rgba(167,112,239,0.4)",
                         background:"rgba(167,112,239,0.07)",cursor:"pointer",
                       }}>
-                        <Avatar name={p.name} size={24}/>
+                        <Avatar name={p.name} photo={p.photo} size={24}/>
                         <span style={{color:"#ccc",fontSize:13,fontWeight:600}}>{p.name}</span>
                       </button>
                     ))}
