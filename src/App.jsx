@@ -29,8 +29,8 @@ const RANK_ICONS = {
 const TROPHIES = [
   { id: "zero",       wins: 0,   img: RANK_ICONS.rat,     label: "Rat des égouts", color: "#aaa" },
   { id: "one",        wins: 1,   img: RANK_ICONS.beggar,  label: "Gueux",          color: "#c8956a" },
-  { id: "five",       wins: 5,   img: RANK_ICONS.sword,   label: "Chevalier",      color: "#C0C0C0" },
-  { id: "ten",        wins: 10,  img: RANK_ICONS.shield,  label: "Garde royal",    color: "#7a9cc0" },
+  { id: "five",       wins: 5,   img: RANK_ICONS.shield,  label: "Chair à canon",  color: "#7a9cc0" },
+  { id: "ten",        wins: 10,  img: RANK_ICONS.sword,   label: "Chevalier",      color: "#C0C0C0" },
   { id: "twentyfive", wins: 25,  img: RANK_ICONS.crystal, label: "Sorcier",        color: "#A770EF" },
   { id: "fifty",      wins: 50,  img: RANK_ICONS.scepter, label: "Sceptre",        color: "#FF9500" },
   { id: "seventy",    wins: 75,  img: RANK_ICONS.cloak,   label: "Cape royale",    color: "#8B0000" },
